@@ -1,45 +1,50 @@
-from tiktokapipy.api import TikTokAPI, TikTokAPIError
-from tiktokapipy.util.deferred_collectors import DeferredCommentIterator
-# import translators
+import asyncio
 import json
+from tiktokapipy.async_api import AsyncTikTokAPI
 from datetime import datetime, timezone
+from tiktokapipy.api import TikTokAPIError
 
 
 
-def FetchVideos(hashtags):
+async def FetchVideos(hashtag, output):
     """
     param:
         hashtags: requested hashtags to fetch
     return:
         dict {video_id: [url, creation_date, description=""]}
     """
-    with TikTokAPI() as api:
-        output = {}
+    async with AsyncTikTokAPI() as api:
         threshold_datetime = datetime(2023, 10, 7, tzinfo=timezone.utc)
+        print(f"hashtag: {hashtag}")
+        try:
+            tag = await api.challenge(hashtag, video_limit=10)
+        except TikTokAPIError as err:
+            print("================WARNING================\n" +
+            f"hashtag - {hashtag} - FAILED TO FIND HASHTAG\n" +
+            "================WARNING================")
+        videos = tag.videos
+        try:
+            async for video in videos:
+                # video_comments = DeferredCommentIterator(api, video.id)   # TODO: classify by comments (optional)
+                print(f"{video.create_time}  :  {threshold_datetime}")
+                if video.create_time > threshold_datetime:
+                    output[video.id] = [video.url, video.create_time, video.desc]
+                else:
+                    print("  -not relevant")
+        except Exception as err:  # 
+                print(f"hashtag - {hashtag} - FAILED TO GET VIDEOS. Error: {err}")
+                return
+    
 
-        for hashtag in hashtags:
-            print(f"hashtag: {hashtag}")
-            try:
-                tag = api.challenge(hashtag, video_limit=500)
-            except TikTokAPIError as err:
-                print("================WARNING================\n" +
-                f"hashtag - {hashtag} - FAILED TO FIND HASHTAG\n" +
-                "================WARNING================")
-            videos = tag.videos
-            try:
-                for video in videos:
-                    # video_comments = DeferredCommentIterator(api, video.id)   # TODO: classify by comments (optional)
-                    print(f"{video.create_time}  :  {threshold_datetime}")
-                    if video.create_time > threshold_datetime:
-                        output[video.id] = [video.url, video.create_time, video.desc]
-                    else:
-                        print("  -not relevant")
-            except Exception as err:  # 
-                 print(f"hashtag - {hashtag} - FAILED TO GET VIDEOS. Error: {err}")
-                 continue
-        return output
-
-
+async def FetchHashtags(hashtags):
+    output = {}
+    tasks = []
+    for hashtag in hashtags:
+        t = asyncio.create_task(FetchVideos(hashtag, output))
+        tasks.append(t)
+    for t in tasks:
+        await asyncio.wait_for(t, timeout=15)
+    return output
 
 
 def LoadHashtagFromFile(file_path):
@@ -52,12 +57,7 @@ def LoadHashtagFromFile(file_path):
 
 
 
-
-
-
-
-
-def SaveDataToFile(video_data, filename="against.json"):
+def SaveDataToFile(video_data, filename="support.json"):
     """
     Saves the video data to a specified file in JSON format.
     
@@ -94,21 +94,19 @@ def CleanDataVideo(video_data):
 
 
 
+
+
 def main():
     """
     Main function to execute the fetching and saving operations.
     """
     
-    # support_hashtags = LoadHashtagFromFile('support_hashtags.txt')
-    # print(support_hashtags)
-
-    against_hashtags = LoadHashtagFromFile('against_hashtags.txt')
-    print(against_hashtags)
-
-    video_data = FetchVideos(against_hashtags)
-    print(video_data)
+    support_hashtags = LoadHashtagFromFile('try.txt')
+    print(support_hashtags)
+    print(asyncio.run(FetchHashtags(support_hashtags)))
+    #print(video_data)
     
-    SaveDataToFile(video_data)
+    #SaveDataToFile(video_data)
 
 
 if __name__ == "__main__":
