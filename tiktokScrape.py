@@ -41,7 +41,6 @@ def FetchVideos(hashtags):
 
 
 
-
 def LoadHashtagFromFile(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -49,11 +48,6 @@ def LoadHashtagFromFile(file_path):
     except FileNotFoundError:
         print(f"File {file_path} not found. Please check the file path.")
         return []
-
-
-
-
-
 
 
 
@@ -73,11 +67,6 @@ def SaveDataToFile(video_data, filename="against.json"):
     except Exception as e:
         print(f"Failed to save data to {filename}. Error: {e}")
     
-
-
-
-
-
 
 def CleanDataVideo(video_data):
     """
@@ -109,6 +98,7 @@ def main():
     print(video_data)
     
     SaveDataToFile(video_data)
+
 
 
 if __name__ == "__main__":
