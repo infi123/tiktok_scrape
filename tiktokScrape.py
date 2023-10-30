@@ -16,7 +16,7 @@ def FetchVideos(hashtags):
     with TikTokAPI() as api:
         output = {}
         # threshold_datetime = datetime(2023, 10, 7, tzinfo=timezone.utc)
-        threshold_datetime = datetime(2023, 10, 19, 18, 0, tzinfo=timezone.utc)
+        threshold_datetime = datetime(2023, 10, 27, 18, 0, tzinfo=timezone.utc)
 
         for hashtag in hashtags:
             print(f"hashtag: {hashtag}")
@@ -52,7 +52,7 @@ def LoadHashtagFromFile(file_path):
 
 
 
-def SaveDataToFile(video_data, filename="new.json"):
+def SaveDataToFile(video_data, filename="27_30.json"):
     """
     Saves the video data to a specified file in JSON format.
     
